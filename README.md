@@ -20,4 +20,4 @@ ResNet-18
 
 # 流程图
 ![1656581595484](https://user-images.githubusercontent.com/94331641/176644118-e4d9ad56-4129-4dd2-962b-ad1632ea1f1a.png)
-
+from Biao Liu's paper
