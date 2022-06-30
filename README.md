@@ -18,3 +18,6 @@ ResNet-18
 - 参数初始化：不随机初始化参数，而是将ImageNet预训练模型得到的参数作为初始参数
 - 论文中得到的最优学习率是5 * 10^(-5)
 
+# 流程图
+![1656581595484](https://user-images.githubusercontent.com/94331641/176644118-e4d9ad56-4129-4dd2-962b-ad1632ea1f1a.png)
+
