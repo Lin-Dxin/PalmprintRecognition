@@ -3,7 +3,5 @@
 # 要求
 
 # 使用模型
+1. ResNet
 
-# HI,cute cute Linda
-
-# YOU ARE MY CUTY BABY
