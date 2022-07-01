@@ -46,7 +46,7 @@ def test_loader(path, batch_size=32, num_workers=4, pin_memory=True):
         pin_memory=pin_memory)
 
 if __name__ == '__main__':
-    train_dir = "data/TrainingSet/ROI_image/session1"
+    train_dir = "data/TrainingSet/NIR"
     test_ld = loader(train_dir)
     print(test_ld)
     # list_plastic = os.listdir(train_dir)
