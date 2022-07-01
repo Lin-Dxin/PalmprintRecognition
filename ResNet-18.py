@@ -1,4 +1,4 @@
-import numpy as np
+
 from torchvision import models
 from torch import nn
 
