@@ -47,8 +47,14 @@ def test_loader(path, batch_size=32, num_workers=4, pin_memory=True):
 
 if __name__ == '__main__':
     train_dir = "data/TrainingSet/NIR"
-    test_ld = loader(train_dir)
-    print(test_ld)
+    test_ld = test_loader(train_dir)
+    for data in test_ld:
+        x = data[:-1]
+        y = data[-1]
+        print("数据内容为：\n", x)
+        print("数据标签为：\n", y)
+        break
+
     # list_plastic = os.listdir(train_dir)
     # number_files_plastic = len(list_plastic)
     # print(number_files_plastic)
