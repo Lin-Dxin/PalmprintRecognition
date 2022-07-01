@@ -1,5 +1,5 @@
-# import numpy as np
-# import torch
+import numpy as np
+import torch
 # import torch.backends.cudnn as cudnn
 # import torch.nn as nn
 # import torch.nn.parallel
@@ -7,6 +7,7 @@
 import torch.utils.data as data
 import torchvision.datasets as datasets
 # import torchvision.models as models
+import torchvision.transforms
 import torchvision.transforms as transforms
 # from PIL import Image
 # import glob
@@ -49,10 +50,10 @@ if __name__ == '__main__':
     train_dir = "data/TrainingSet/NIR"
     test_ld = test_loader(train_dir)
     for data in test_ld:
-        x = data[:-1]
-        y = data[-1]
-        print("数据内容为：\n", x)
-        print("数据标签为：\n", y)
+        x = data[0] # 数据文件
+        y = data[1] # 标签
+        print("数据内容为：\n", x.shape)
+        print("数据标签为：\n", y.shape)
         break
 
     # list_plastic = os.listdir(train_dir)
