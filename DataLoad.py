@@ -19,14 +19,14 @@ def loader(path, batch_size=32, num_workers=4, pin_memory=True):
     return data.DataLoader(
         datasets.ImageFolder(path,
                              transforms.Compose([
-                                 transforms.Resize(256),
-                                 transforms.RandomResizedCrop(256),
+                                 transforms.Resize([122, 244]),
+                                 transforms.RandomResizedCrop([122, 244]),
                                  transforms.RandomHorizontalFlip(),
                                  transforms.ToTensor(),
                                  normalize,
                              ])),
         batch_size=batch_size,
-        shuffle=True,
+        shuffle=False,
         num_workers=num_workers,
         pin_memory=pin_memory)
 
@@ -36,8 +36,8 @@ def test_loader(path, batch_size=32, num_workers=4, pin_memory=True):
     return data.DataLoader(
         datasets.ImageFolder(path,
                              transforms.Compose([
-                                 transforms.Resize(256),
-                                 transforms.CenterCrop(224),
+                                 transforms.Resize([122, 244]),
+                                 transforms.CenterCrop(244),
                                  transforms.ToTensor(),
                                  normalize,
                              ])),
@@ -46,15 +46,24 @@ def test_loader(path, batch_size=32, num_workers=4, pin_memory=True):
         num_workers=num_workers,
         pin_memory=pin_memory)
 
+
 if __name__ == '__main__':
     train_dir = "data/TrainingSet/NIR"
-    test_ld = test_loader(train_dir)
+    test_ld = loader(train_dir)
     for data in test_ld:
-        x = data[0] # 数据文件
-        y = data[1] # 标签
-        print("数据内容为：\n", x.shape)
-        print("数据标签为：\n", y.shape)
+        rawInput = data[0]  # 数据文件
+        rawLabel = data[1]  # 标签
+        label = torch.zeros(16)
+        for i in range(16):
+            x = torch.cat((rawInput[i], rawInput[i + 1]), 1)
+            label[i] = 1 if rawLabel[i] == rawLabel[i + 1] else 0
+            i += 2
+        print(x.shape, label.shape)
+        print(label, rawLabel)
         break
+
+
+
 
     # list_plastic = os.listdir(train_dir)
     # number_files_plastic = len(list_plastic)
