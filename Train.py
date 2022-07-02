@@ -41,7 +41,10 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
             running_corrects = 0
 
             for batch_data in data_loader.load_data(data_set=phase):
-                inputs, labels = batch_data
+                rawinputs, rawlabels = batch_data
+                inputs = torch.zeros([data_loader.batch_size / 2, 3, 244, 244])
+                labels = torch.zeros(data_loader.batch_size / 2)
+                inputs, labels = get_concated_data(rawinputs, rawlabels, data_loader.batch_size)
                 inputs, labels = Variable(inputs), Variable(labels)
 
                 optimizer.zero_grad()
@@ -57,8 +60,8 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
                 running_loss += loss.data[0]
                 running_corrects += torch.sum(predict == labels.data)
 
-            epoch_loss = running_loss / data_loader.data_sizes[phase]
-            epoch_acc = running_corrects / data_loader.data_sizes[phase]
+            epoch_loss = running_loss / (data_loader.data_sizes[phase] * 2)
+            epoch_acc = running_corrects / (data_loader.data_sizes[phase] * 2)
 
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(
                 phase, epoch_loss, epoch_acc))
@@ -75,9 +78,27 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
     print('Best val Acc: {:4f}'.format(best_acc))
     return best_model
 
+
+def get_concated_data(rawinputs, rawlabels, batch_size):
+    # 二和一、每次往后迭代两次
+    # 前半部分不打乱、后半部分打乱
+    # cnt 记录拼接次数、一旦超过一半后
+    # 随机挑选后面的数字 6000 3000 3000 1500 1500
+    # 3000 if cnt > 1500: random_pic (1500,3000)
+    it_times = batch_size / 2
+    for cnt in it_times:
+        if cnt < it_times / 2:
+
+            pass
+            # 顺序抽取
+        else:
+            pass
+            # 随机抽取
+
+
 def exp_lr_scheduler(optimizer, epoch, init_lr=0.001, lr_decay_epoch=7):
     """Decay learning rate by a factor of 0.1 every lr_decay_epoch epochs."""
-    lr = init_lr * (0.1**(epoch // lr_decay_epoch))
+    lr = init_lr * (0.1 ** (epoch // lr_decay_epoch))
 
     if epoch % lr_decay_epoch == 0:
         print('LR is set to {}'.format(lr))
@@ -87,17 +108,15 @@ def exp_lr_scheduler(optimizer, epoch, init_lr=0.001, lr_decay_epoch=7):
 
     return optimizer
 
+
 def save_torch_model(model, name):
     torch.save(model.state_dict(), name)
 
 
-
 if __name__ == '__main__':
     train_dir = "data/TrainingSet/NIR"
-    data_loader = DataLoad.loader(train_dir)
 
-
-    # data_loader = DataLoader(data_dir='datasets/hymenoptera_data', image_size=IMAGE_SIZE, batch_size=4)
+    data_loader = DataLoad.DataLoader(data_dir='Data/RO', image_size=IMAGE_SIZE, batch_size=4)
     inputs, classes = next(iter(data_loader.load_data()))
     out = torchvision.utils.make_grid(inputs)
     data_loader.show_image(out, title=[data_loader.data_classes[c] for c in classes])
@@ -113,5 +132,3 @@ if __name__ == '__main__':
         print('manually interrupt, try saving model for now...')
         save_torch_model(model, "model1")
         print('model saved.')
-
-
