@@ -1,26 +1,14 @@
+import copy
+
 import torch
+import torchvision
 import torch.nn as nn
+from model import fine_tune_model
+import DataLoad
+import time
 import torch.optim as optim
 from torch.autograd import Variable
-import numpy as np
-import torchvision
-from torchvision import datasets, models, transforms
-import matplotlib.pyplot as plt
-import time
-import copy
-import os
-from global_config import *
-from data_loader.data_loader import DataLoader
 
-# 微调的resnet-18
-def fine_tune_model():
-    model_feature = models.resnet18(pretrained=True)
-    # 记录全连接层的特征输入数
-    num_features = model_feature.fc.in_features
-    # 将最后一层的全连接层修改为我们定义的层
-    model_feature.fc = nn.Linear(num_features, 2)
-
-    return model_feature
 
 def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epochs=25):
     """
@@ -54,10 +42,7 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
 
             for batch_data in data_loader.load_data(data_set=phase):
                 inputs, labels = batch_data
-                if USE_GPU:
-                    inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
-                else:
-                    inputs, labels = Variable(inputs), Variable(labels)
+                inputs, labels = Variable(inputs), Variable(labels)
 
                 optimizer.zero_grad()
 
@@ -90,9 +75,8 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
     print('Best val Acc: {:4f}'.format(best_acc))
     return best_model
 
-
 def exp_lr_scheduler(optimizer, epoch, init_lr=0.001, lr_decay_epoch=7):
-    """每lr_decay_epoch个epoch就将学习率衰减为原来的0.1倍"""
+    """Decay learning rate by a factor of 0.1 every lr_decay_epoch epochs."""
     lr = init_lr * (0.1**(epoch // lr_decay_epoch))
 
     if epoch % lr_decay_epoch == 0:
@@ -103,28 +87,31 @@ def exp_lr_scheduler(optimizer, epoch, init_lr=0.001, lr_decay_epoch=7):
 
     return optimizer
 
-
 def save_torch_model(model, name):
     torch.save(model.state_dict(), name)
 
 
 
-
-
-model = fine_tune_model()
-criterion = nn.CrossEntropyLoss()
-optimizer_ft = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
-try:
-    model = train_model(data_loader, model, criterion, optimizer_ft, exp_lr_scheduler, num_epochs=25)
-    save_torch_model(model, r".\PalmprintRecognition")        # dir of model saved
-except KeyboardInterrupt:
-    print('manually interrupt, try saving model for now...')
-    save_torch_model(model, MODEL_SAVE_FILE)
-    print('model saved.')
-
-
-def main():
-    train()
-
 if __name__ == '__main__':
-    main()
+    train_dir = "data/TrainingSet/NIR"
+    data_loader = DataLoad.loader(train_dir)
+
+
+    # data_loader = DataLoader(data_dir='datasets/hymenoptera_data', image_size=IMAGE_SIZE, batch_size=4)
+    inputs, classes = next(iter(data_loader.load_data()))
+    out = torchvision.utils.make_grid(inputs)
+    data_loader.show_image(out, title=[data_loader.data_classes[c] for c in classes])
+
+    model = fine_tune_model()
+
+    criterion = nn.CrossEntropyLoss()
+    optimizer_ft = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+    try:
+        model = train_model(data_loader, model, criterion, optimizer_ft, exp_lr_scheduler, num_epochs=25)
+        save_torch_model(model, "model1")
+    except KeyboardInterrupt:
+        print('manually interrupt, try saving model for now...')
+        save_torch_model(model, "model1")
+        print('model saved.')
+
+

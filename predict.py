@@ -1,7 +1,7 @@
 """
 this file predict single image using the model we previous trained.
 """
-from models.fine_tune_model import fine_tune_model
+from model import fine_tune_model
 from global_config import *
 import torch
 import os
@@ -11,26 +11,17 @@ from data_loader.data_loader import DataLoader
 
 def predict_single_image(inputs, classes_name):
     model = fine_tune_model()
-    if USE_GPU:
-        inputs = inputs.cuda()
     if not os.path.exists(MODEL_SAVE_FILE):
         print('can not find model save file.')
         exit()
     else:
-        if USE_GPU:
-            model.load_state_dict(torch.load(MODEL_SAVE_FILE))
-        else:
-            model.load_state_dict(torch.load(MODEL_SAVE_FILE, map_location=lambda storage, loc: storage))
+        model.load_state_dict(torch.load(MODEL_SAVE_FILE, map_location=lambda storage, loc: storage))
         outputs = model(inputs)
         _, prediction_tensor = torch.max(outputs.data, 1)
-        if USE_GPU:
-            prediction = prediction_tensor.cpu().numpy()[0][0]
-            print('predict: ', prediction)
-            print('this is {}'.format(classes_name[prediction]))
-        else:
-            prediction = prediction_tensor.numpy()[0][0]
-            print('predict: ', prediction)
-            print('this is {}'.format(classes_name[prediction]))
+        prediction = prediction_tensor.numpy()[0][0]
+        # 增加与实际标签对比，记录准确率
+        print('predict: ', prediction)
+        print('this is {}'.format(classes_name[prediction]))
 
 
 def predict():
