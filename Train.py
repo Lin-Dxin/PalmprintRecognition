@@ -8,7 +8,7 @@ import DataLoad
 import time
 import torch.optim as optim
 from torch.autograd import Variable
-
+from random import sample
 
 def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epochs=25):
     """
@@ -42,11 +42,11 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
 
             for batch_data in data_loader.load_data(data_set=phase):
                 rawinputs, rawlabels = batch_data
-                inputs = torch.zeros([data_loader.batch_size / 2, 3, 244, 244])
-                labels = torch.zeros(data_loader.batch_size / 2)
-                inputs, labels = get_concated_data(rawinputs, rawlabels, data_loader.batch_size)
-                inputs, labels = Variable(inputs), Variable(labels)
 
+                inputs, labels = get_concated_data(rawinputs, rawlabels, 50)
+                inputs, labels = Variable(inputs), Variable(labels)
+                print(inputs.shape, labels.shape)
+                print(labels)
                 optimizer.zero_grad()
 
                 outputs = model(inputs)
@@ -85,17 +85,27 @@ def get_concated_data(rawinputs, rawlabels, batch_size):
     # cnt 记录拼接次数、一旦超过一半后
     # 随机挑选后面的数字 6000 3000 3000 1500 1500
     # 3000 if cnt > 1500: random_pic (1500,3000)
-    it_times = batch_size / 2
-    for cnt in it_times:
-        if cnt < it_times / 2:
-
+    inputs = torch.zeros([25, 3, 244, 244], dtype=torch.long)
+    labels = torch.zeros(25, dtype=torch.long)
+    it_times = int(batch_size / 2)
+    cnt = 0
+    j = 0
+    for i in range(it_times): #  0  2  4
+        if i < it_times / 2:
+            inputs[j] = torch.cat([rawinputs[cnt], rawinputs[cnt + 1]], 1)
+            labels[j] = 1 if rawlabels[cnt] == rawlabels[cnt + 1] else 0
+            # print(rawlabels[cnt], rawlabels[cnt + 1])
+            j = j + 1
             pass
             # 顺序抽取
         else:
-
-            pass
+            rand_a, rand_b = sample(range(it_times,batch_size,1), 2) # 从后半部分随机抽取两个数字
+            inputs[j] = torch.cat([rawinputs[rand_a], rawinputs[rand_b]], 1)
+            labels[j] = 1 if rawlabels[rand_a] == rawlabels[rand_b] else 0
+            j = j + 1
             # 随机抽取
-
+        cnt = cnt + 2
+    return inputs, labels
 
 def exp_lr_scheduler(optimizer, epoch, init_lr=0.001, lr_decay_epoch=7):
     """Decay learning rate by a factor of 0.1 every lr_decay_epoch epochs."""
@@ -115,12 +125,12 @@ def save_torch_model(model, name):
 
 
 if __name__ == '__main__':
-    train_dir = "data/TrainingSet/NIR"
+    train_dir = "data/TrainingSet/NIR/"
 
-    data_loader = DataLoad.DataLoader(data_dir='Data/RO', image_size=IMAGE_SIZE, batch_size=4)
-    inputs, classes = next(iter(data_loader.load_data()))
-    out = torchvision.utils.make_grid(inputs)
-    data_loader.show_image(out, title=[data_loader.data_classes[c] for c in classes])
+    data_loader = DataLoad.DataLoader(data_dir='Data/TrainingSet/ROI_image/', image_size=[122,244], batch_size=50)
+    #inputs, classes = next(iter(data_loader.load_data()))
+    #out = torchvision.utils.make_grid(inputs)
+    #data_loader.show_image(out, title=[data_loader.data_classes[c] for c in classes])
 
     model = fine_tune_model()
 
