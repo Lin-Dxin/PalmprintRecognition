@@ -92,6 +92,7 @@ def get_concated_data(rawinputs, rawlabels, batch_size):
             pass
             # 顺序抽取
         else:
+
             pass
             # 随机抽取
 
