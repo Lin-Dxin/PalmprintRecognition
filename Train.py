@@ -47,7 +47,9 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
 
                 inputs, labels = get_concated_data(rawinputs, rawlabels, 50)
                 if use_gpu:
-                    inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda)
+                    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+                    inputs = inputs.to(device)
+                    labels = labels.to(device)
                 else:
                     inputs, labels = Variable(inputs), Variable(labels)
                 # print(inputs.shape, labels.shape)
@@ -143,12 +145,12 @@ if __name__ == '__main__':
     # out = torchvision.utils.make_grid(inputs)
     # data_loader.show_image(out, title=[data_loader.data_classes[c] for c in classes])
 
-    model = fine_tune_model()
+    model = fine_tune_model(use_gpu=True)
 
     criterion = nn.CrossEntropyLoss()
     optimizer_ft = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     try:
-        model = train_model(data_loader, model, criterion, optimizer_ft, exp_lr_scheduler, num_epochs=25, use_gpu=False)
+        model = train_model(data_loader, model, criterion, optimizer_ft, exp_lr_scheduler, num_epochs=25, use_gpu=True)
         save_torch_model(model, "model1")
     except KeyboardInterrupt:
         print('manually interrupt, try saving model for now...')
