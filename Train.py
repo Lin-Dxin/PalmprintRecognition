@@ -45,8 +45,8 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
 
                 inputs, labels = get_concated_data(rawinputs, rawlabels, 50)
                 inputs, labels = Variable(inputs), Variable(labels)
-                print(inputs.shape, labels.shape)
-                print(labels)
+                #print(inputs.shape, labels.shape)
+                #print(labels)
                 optimizer.zero_grad()
 
                 outputs = model(inputs)
@@ -57,7 +57,7 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
                     optimizer.step()
 
                 # collect data info
-                running_loss += loss.data[0]
+                running_loss += loss.data
                 running_corrects += torch.sum(predict == labels.data)
 
             epoch_loss = running_loss / (data_loader.data_sizes[phase] * 2)
@@ -85,8 +85,10 @@ def get_concated_data(rawinputs, rawlabels, batch_size):
     # cnt 记录拼接次数、一旦超过一半后
     # 随机挑选后面的数字 6000 3000 3000 1500 1500
     # 3000 if cnt > 1500: random_pic (1500,3000)
-    inputs = torch.zeros([25, 3, 244, 244], dtype=torch.long)
-    labels = torch.zeros(25, dtype=torch.long)
+    inputs = torch.zeros([25, 3, 244, 244],dtype=torch.float32)
+    labels = torch.zeros(25,dtype=torch.int64)
+    #print(rawlabels.dtype)
+    #print(rawinputs.dtype)
     it_times = int(batch_size / 2)
     cnt = 0
     j = 0
@@ -94,14 +96,17 @@ def get_concated_data(rawinputs, rawlabels, batch_size):
         if i < it_times / 2:
             inputs[j] = torch.cat([rawinputs[cnt], rawinputs[cnt + 1]], 1)
             labels[j] = 1 if rawlabels[cnt] == rawlabels[cnt + 1] else 0
-            # print(rawlabels[cnt], rawlabels[cnt + 1])
+            #print(rawlabels[cnt], rawlabels[cnt + 1])
+            #print("=======label:",j,"++++",labels[j],"=======")
             j = j + 1
-            pass
+
             # 顺序抽取
         else:
             rand_a, rand_b = sample(range(it_times,batch_size,1), 2) # 从后半部分随机抽取两个数字
             inputs[j] = torch.cat([rawinputs[rand_a], rawinputs[rand_b]], 1)
             labels[j] = 1 if rawlabels[rand_a] == rawlabels[rand_b] else 0
+            #print(rawlabels[rand_a], rawlabels[rand_b])
+            #print("=======label:", j, "++++", labels[j], "=======")
             j = j + 1
             # 随机抽取
         cnt = cnt + 2

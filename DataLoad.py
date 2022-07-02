@@ -45,7 +45,7 @@ class DataLoader(object):
                           for x in ['train', 'val']}
 
         self.data_loaders = {x: torch.utils.data.DataLoader(self.data_sets[x], batch_size=self.batch_size,
-                                                            shuffle=True, num_workers=4)
+                                                            shuffle=False, num_workers=4)
                              for x in ['train', 'val']}
         self.data_sizes = {x: len(self.data_sets[x]) for x in ['train', 'val']}
         self.data_classes = self.data_sets['train'].classes
