@@ -27,7 +27,6 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
 
     best_model = model
     best_acc = 0
-
     for epoch in range(num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
@@ -44,8 +43,9 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
 
             for batch_data in data_loader.load_data(data_set=phase):
                 rawinputs, rawlabels = batch_data
+                inputs, labels = get_concated_data(rawinputs, rawlabels, data_loader.batch_size)
 
-                inputs, labels = get_concated_data(rawinputs, rawlabels, 50)
+                # data_loader.show_image(inputs[0])
                 if use_gpu:
                     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
                     inputs = inputs.to(device)
@@ -54,6 +54,7 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
                     inputs, labels = Variable(inputs), Variable(labels)
                 # print(inputs.shape, labels.shape)
                 # print(labels)
+                #inputs_num += len(inputs)
                 optimizer.zero_grad()
 
                 outputs = model(inputs)
@@ -92,8 +93,9 @@ def get_concated_data(rawinputs, rawlabels, batch_size):
     # cnt 记录拼接次数、一旦超过一半后
     # 随机挑选后面的数字 6000 3000 3000 1500 1500
     # 3000 if cnt > 1500: random_pic (1500,3000)
-    inputs = torch.zeros([25, 3, 244, 244], dtype=torch.float32)
-    labels = torch.zeros(25, dtype=torch.int64)
+    length = int(batch_size/2)
+    inputs = torch.zeros([length, 3, 244, 244], dtype=torch.float32)
+    labels = torch.zeros(length, dtype=torch.int64)
     # print(rawlabels.dtype)
     # print(rawinputs.dtype)
     it_times = int(batch_size / 2)
@@ -139,11 +141,13 @@ def save_torch_model(model, name):
 
 if __name__ == '__main__':
     train_dir = "data/TrainingSet/NIR/"
-
-    data_loader = DataLoad.DataLoader(data_dir='Data/TrainingSet/ROI_image/', image_size=[122, 244], batch_size=50)
+    _batchsize = 100
+    data_loader = DataLoad.DataLoader(data_dir='Data/TrainingSet/ROI_image/', image_size=[122, 244], batch_size=_batchsize)
+    # print(data_loader.data_sizes['train'])
     # inputs, classes = next(iter(data_loader.load_data()))
     # out = torchvision.utils.make_grid(inputs)
     # data_loader.show_image(out, title=[data_loader.data_classes[c] for c in classes])
+
 
     model = fine_tune_model(use_gpu=True)
 

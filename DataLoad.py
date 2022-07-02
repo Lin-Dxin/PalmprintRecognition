@@ -27,7 +27,7 @@ class DataLoader(object):
         self.data_transforms = {
             'train': transforms.Compose([
                 transforms.Resize([122,244]),
-                transforms.RandomHorizontalFlip(),
+                #transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize(self.normalize_mean, self.normalize_std)
             ]),
