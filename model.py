@@ -37,7 +37,6 @@ class two_input_net(nn.Module):
         # torch.cat([x1, x2], )
         x1 = torch.squeeze(x1)
         x2 = torch.squeeze(x2)
-        print(x1.shape)
         cos = nn.CosineSimilarity(dim=1, eps=1e-6)
         output = cos(x1, x2)
         return output
