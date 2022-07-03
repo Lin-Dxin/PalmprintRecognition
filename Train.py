@@ -43,7 +43,7 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
 
             for batch_data in data_loader.load_data(data_set=phase):
                 rawinputs, rawlabels = batch_data
-                inputs, labels = get_concated_data(rawinputs, rawlabels, data_loader.batch_size)
+                input1, input2, labels = get_two_input_data(rawinputs, rawlabels, data_loader.batch_size)
 
                 # data_loader.show_image(inputs[0])
                 if use_gpu:
@@ -57,8 +57,9 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
                 #inputs_num += len(inputs)
                 optimizer.zero_grad()
 
-                outputs = model(inputs) #input1 input2
-                _, predict = torch.max(outputs.data, 1)
+                outputs = model(input1,input2)
+                # _, predict = torch.max(outputs.data, 1)
+
                 loss = criterion(outputs, labels)
                 if phase == 'train':
                     loss.backward()
