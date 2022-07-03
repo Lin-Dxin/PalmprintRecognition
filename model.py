@@ -14,6 +14,11 @@ def fine_tune_model(use_gpu=False):
         model_feature = model_feature.cuda()
     return model_feature
 
+def get_two_input_net():
+    model_feature = models.resnet18(weights=ResNet18_Weights.DEFAULT)
+    net = two_input_net(model_feature)
+    return net
+
 
 class two_input_net(nn.Module):
     def __init__(self, model):

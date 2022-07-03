@@ -3,13 +3,15 @@ import copy
 import torch
 import torchvision
 import torch.nn as nn
-from model import fine_tune_model
+from torchvision.models import ResNet18_Weights
+
+import model
 import DataLoad
 import time
 import torch.optim as optim
 from torch.autograd import Variable
 from random import sample
-
+from torchvision import models
 
 def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epochs=25, use_gpu=False):
     """
@@ -44,22 +46,21 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
             for batch_data in data_loader.load_data(data_set=phase):
                 rawinputs, rawlabels = batch_data
                 input1, input2, labels = get_two_input_data(rawinputs, rawlabels, data_loader.batch_size)
-
-                # data_loader.show_image(inputs[0])
+                data_loader.show_image(input1[0])
                 if use_gpu:
                     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
                     input1 = input1.to(device)
                     input2 = input2.to(device)
                     labels = labels.to(device)
                 else:
-                    input1, input2,labels = Variable(input1), Variable(input2), Variable(labels)
+                    input1, input2, labels = Variable(input1), Variable(input2), Variable(labels)
                 # print(inputs.shape, labels.shape)
                 # print(labels)
-                #inputs_num += len(inputs)
+                # inputs_num += len(inputs)
                 optimizer.zero_grad()
 
-                outputs = model(input1,input2)
-                print(outputs.data)    #看一下余弦相似度的范围
+                outputs = model(input1, input2)
+                print(outputs.data)  # 看一下余弦相似度的范围
                 # _, predict = torch.max(outputs.data, 1)
                 # 设置一个判断，predict=1 if output.data>0.5 else 0
                 loss = criterion(outputs, labels)
@@ -89,24 +90,36 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
     print('Best val Acc: {:4f}'.format(best_acc))
     return best_model
 
+
 def get_two_input_data(rawinputs, rawlabels, batch_size):
     length = int(batch_size / 2)
-    it_times = int(batch_size/2)    #100/2=50
-    input1 = torch.zeros([length, 3, 244, 244], dtype=torch.float32)
+    it_times = int(batch_size / 2)  # 100/2=50
+    input1 = torch.zeros([length, 3, 244, 244], dtype=torch.float32) # [50,3,244,244]
     input2 = torch.zeros([length, 3, 244, 244], dtype=torch.float32)
-    labels = torch.zeros(length, dtype=torch.int64)
+    labels = torch.zeros([length, 1], dtype=torch.int64)
     cnt = 0
-    for i in range(it_times):   #50
-        if i < it_times / 2:     #<25
-            input1[cnt] = rawinputs[cnt]; label1 = rawlabels[cnt] ;cnt += 1
-            input2[cnt] = rawinputs[cnt]; label2 = rawlabels[cnt] ;cnt += 1
-            labels[i] = 1 if label1 == label2 else 0
-        else:   #>25
+    j = 0
+    for i in range(it_times):  # 50
+        if i < it_times / 2:  # <25
+            input1[j] = rawinputs[cnt]
+            label1 = rawlabels[cnt]
+            cnt += 1
+            input2[j] = rawinputs[cnt]
+            label2 = rawlabels[cnt]
+            cnt += 1
+            labels[j][0] = 1 if label1 == label2 else 0
+            j += 1
+        else:  # >25
             rand_a, rand_b = sample(range(it_times, batch_size, 1), 2)
-            input1 = rawinputs[rand_a] ; label1 = rawlabels[rand_a]
-            input2 = rawinputs[rand_b] ; label2 = rawlabels[rand_b]
-            labels[i] = 1 if label1 == label2 else 0
-    return input1,input2,labels
+            input1[j] = rawinputs[rand_a]
+            label1 = rawlabels[rand_a]
+            input2[j] = rawinputs[rand_b]
+            label2 = rawlabels[rand_b]
+            labels[j][0] = 1 if label1 == label2 else 0
+            j += 1
+    print(input1.shape,"\n",input2.shape,"\n",labels.shape)
+    return input1, input2, labels
+
 
 def get_concated_data(rawinputs, rawlabels, batch_size):
     # 二和一、每次往后迭代两次
@@ -114,7 +127,7 @@ def get_concated_data(rawinputs, rawlabels, batch_size):
     # cnt 记录拼接次数、一旦超过一半后
     # 随机挑选后面的数字 6000 3000 3000 1500 1500
     # 3000 if cnt > 1500: random_pic (1500,3000)
-    length = int(batch_size/2)
+    length = int(batch_size / 2)
     inputs = torch.zeros([length, 3, 244, 244], dtype=torch.float32)
     labels = torch.zeros(length, dtype=torch.int64)
     # print(rawlabels.dtype)
@@ -163,16 +176,18 @@ def save_torch_model(model, name):
 if __name__ == '__main__':
     train_dir = "data/TrainingSet/NIR/"
     _batchsize = 100
-    data_loader = DataLoad.DataLoader(data_dir='Data/TrainingSet/ROI_image/', image_size=[122, 244], batch_size=_batchsize)
+    data_loader = DataLoad.DataLoader(data_dir='Data/TrainingSet/ROI_image/', image_size=[122, 244],
+                                      batch_size=_batchsize)
     # print(data_loader.data_sizes['train'])
     # inputs, classes = next(iter(data_loader.load_data()))
     # out = torchvision.utils.make_grid(inputs)
     # data_loader.show_image(out, title=[data_loader.data_classes[c] for c in classes])
 
+    # model = model.fine_tune_model(use_gpu=True)
 
-    model = fine_tune_model(use_gpu=True)
-
-    criterion = nn.CrossEntropyLoss()   #尝试换不同的损失函数
+    model = model.get_two_input_net()
+    model = model.cuda()
+    criterion = nn.CrossEntropyLoss()  # 尝试换不同的损失函数
     optimizer_ft = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     try:
         model = train_model(data_loader, model, criterion, optimizer_ft, exp_lr_scheduler, num_epochs=25, use_gpu=True)
