@@ -65,10 +65,7 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
                 # _, predict = torch.max(outputs.data, 1)
                 # 设置一个判断，predict=1 if output.data>0.5 else 0
                 predict = get_predict(outputs)
-                print(outputs.dtype)
-                print(predict.dtype)
-                print(predict.shape)
-                print(outputs.shape)
+                predict = predict.cuda()
                 loss = criterion(outputs, labels)
                 if phase == 'train':
                     loss.backward()
@@ -98,8 +95,8 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
 
 
 def get_predict(outputs):
-    print(outputs.shape)
-    predict = torch.zeros(len(outputs))
+    # print(outputs.shape)
+    predict = torch.zeros(len(outputs), dtype=torch.int64)
     i = 0
     for result in outputs:
         if result > 0.5:
@@ -115,12 +112,12 @@ def get_two_input_data(rawinputs, rawlabels, batch_size):
     it_times = int(batch_size / 2)  # 100/2=50
     input1 = torch.zeros([length, 3, 244, 244], dtype=torch.float32)  # [50,3,244,244]
     input2 = torch.zeros([length, 3, 244, 244], dtype=torch.float32)
-    labels = torch.zeros(length, dtype=torch.int64)
+    labels = torch.zeros(length, dtype=torch.float32)
     cnt = 0
     j = 0
     for i in range(it_times):  # 50
         if i < it_times / 2:  # <25
-            input1[j] = rawinputs[cnt]
+            input1[j] = rawinputs[cnt] # 0 1
             label1 = rawlabels[cnt]
             cnt += 1
             input2[j] = rawinputs[cnt]
@@ -195,7 +192,7 @@ def save_torch_model(model, name):
 if __name__ == '__main__':
     train_dir = "data/TrainingSet/NIR/"
     _batchsize = 100
-    data_loader = DataLoad.DataLoader(data_dir='Data/TrainingSet/ROI_image/', image_size=[122, 244],
+    data_loader = DataLoad.DataLoader(data_dir='Data/TrainingSet/ROI_image/', image_size=244,
                                       batch_size=_batchsize)
     # print(data_loader.data_sizes['train'])
     # inputs, classes = next(iter(data_loader.load_data()))

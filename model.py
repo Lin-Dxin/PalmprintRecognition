@@ -14,6 +14,7 @@ def fine_tune_model(use_gpu=False):
         model_feature = model_feature.cuda()
     return model_feature
 
+
 def get_two_input_net():
     model_feature = models.resnet18(weights=ResNet18_Weights.DEFAULT)
     net = two_input_net(model_feature)
@@ -32,14 +33,14 @@ class two_input_net(nn.Module):
     def forward(self, input1, input2):
         x1 = self.conv(input1)
         x2 = self.conv(input2)
-        x1 = self.resnet_layer(x1)  # 512
-        x2 = self.resnet_layer(x2)  # 512
+        x1 = self.resnet_layer(x1)  # 50,512,1,1
+        x2 = self.resnet_layer(x2)  # 50,512,1,1
         # torch.cat([x1, x2], )
-        x1 = torch.squeeze(x1)
-        x2 = torch.squeeze(x2)
+        x1 = torch.squeeze(x1)  # 50, 512
+        x2 = torch.squeeze(x2)  # 50, 512
         cos = nn.CosineSimilarity(dim=1, eps=1e-6)
         output = cos(x1, x2)
-        return output
+        return output  # 50
 
 
 if __name__ == '__main__':
