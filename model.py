@@ -25,27 +25,31 @@ class two_input_net(nn.Module):
     def __init__(self, model):
         super(two_input_net, self).__init__()
         self.conv = nn.Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-        self.resnet_layer = nn.Sequential(*list(model.children())[1:-1])
-        # num_features = model.fc.in_features
-        # self.linear = nn.Linear(num_features, 2)
-        pass
+        self.resnet_layer = nn.Sequential(*list(model.children())[1:-2])
+        # self.fc = nn.Linear(512)
+
 
     def forward(self, input1, input2):
         x1 = self.conv(input1)
         x2 = self.conv(input2)
-        x1 = self.resnet_layer(x1)  # 50,512,1,1
-        x2 = self.resnet_layer(x2)  # 50,512,1,1
+        x1 = self.resnet_layer(x1)  # 50,512,7,7
+        x2 = self.resnet_layer(x2)  # 50,512,7,7
+        # x1 = self.linear(x1)
+        # x2 = self.linear(x2)
         # torch.cat([x1, x2], )
-        x1 = torch.squeeze(x1)  # 50, 512
-        x2 = torch.squeeze(x2)  # 50, 512
+        # x1 = torch.squeeze(x1)  # 50, 512 , 7 ,7
+        # x2 = torch.squeeze(x2)  # 50, 512 , 7 ,7
+        print(x1.shape)
         cos = nn.CosineSimilarity(dim=1, eps=1e-6)
-        output = cos(x1, x2)
+        output = cos(x1, x2)  # 50, 7, 7
+        # print(output)
+        print(output.shape)
         return output  # 50
 
 
 if __name__ == '__main__':
     model_feature = models.resnet18(weights=ResNet18_Weights.DEFAULT)
-    # print(model_feature)
+    print(model_feature)
     model = two_input_net(model_feature)
 
     print(model)

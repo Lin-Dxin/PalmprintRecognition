@@ -48,6 +48,7 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
                 rawinputs, rawlabels = batch_data
                 input1, input2, labels = get_two_input_data(rawinputs, rawlabels, data_loader.batch_size)
                 # data_loader.show_image(input1[0])
+                # data_loader.show_image(input2[0])
                 if use_gpu:
                     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
                     input1 = input1.to(device)
@@ -99,7 +100,7 @@ def get_predict(outputs):
     predict = torch.zeros(len(outputs), dtype=torch.int64)
     i = 0
     for result in outputs:
-        if result > 0.5:
+        if result > 0.75:
             predict[i] = 1
         else:
             predict[i] = 0
@@ -110,8 +111,8 @@ def get_predict(outputs):
 def get_two_input_data(rawinputs, rawlabels, batch_size):
     length = int(batch_size / 2)
     it_times = int(batch_size / 2)  # 100/2=50
-    input1 = torch.zeros([length, 3, 244, 244], dtype=torch.float32)  # [50,3,244,244]
-    input2 = torch.zeros([length, 3, 244, 244], dtype=torch.float32)
+    input1 = torch.zeros([length, 3, 224, 224], dtype=torch.float32)  # [50,3,244,244]
+    input2 = torch.zeros([length, 3, 224, 224], dtype=torch.float32)
     labels = torch.zeros(length, dtype=torch.float32)
     cnt = 0
     j = 0
@@ -144,7 +145,7 @@ def get_concated_data(rawinputs, rawlabels, batch_size):
     # 随机挑选后面的数字 6000 3000 3000 1500 1500
     # 3000 if cnt > 1500: random_pic (1500,3000)
     length = int(batch_size / 2)
-    inputs = torch.zeros([length, 3, 244, 244], dtype=torch.float32)
+    inputs = torch.zeros([length, 3, 224, 224], dtype=torch.float32)
     labels = torch.zeros(length, dtype=torch.int64)
     # print(rawlabels.dtype)
     # print(rawinputs.dtype)
@@ -192,7 +193,7 @@ def save_torch_model(model, name):
 if __name__ == '__main__':
     train_dir = "data/TrainingSet/NIR/"
     _batchsize = 100
-    data_loader = DataLoad.DataLoader(data_dir='Data/TrainingSet/ROI_image/', image_size=244,
+    data_loader = DataLoad.DataLoader(data_dir='Data/TrainingSet/ROI_image/', image_size=224,
                                       batch_size=_batchsize)
     # print(data_loader.data_sizes['train'])
     # inputs, classes = next(iter(data_loader.load_data()))
@@ -204,6 +205,7 @@ if __name__ == '__main__':
     model = model.get_two_input_net()
     model = model.cuda()
     criterion = nn.CrossEntropyLoss()  # 尝试换不同的损失函数
+    # criterion
     optimizer_ft = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     try:
         model = train_model(data_loader, model, criterion, optimizer_ft, exp_lr_scheduler, num_epochs=25, use_gpu=True)

@@ -26,13 +26,13 @@ class DataLoader(object):
         self.normalize_std = [0.229, 0.224, 0.225]
         self.data_transforms = {
             'train': transforms.Compose([
-                transforms.Resize(244),
-                transforms.RandomHorizontalFlip(),
+                transforms.Resize(224),
+                # transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize(self.normalize_mean, self.normalize_std)
             ]),
             'val': transforms.Compose([
-                transforms.Resize(244),
+                transforms.Resize(224),
                 transforms.CenterCrop(self.image_size),
                 transforms.ToTensor(),
                 transforms.Normalize(self.normalize_mean, self.normalize_std)
