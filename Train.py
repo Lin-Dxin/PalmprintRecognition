@@ -48,18 +48,20 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
                 # data_loader.show_image(inputs[0])
                 if use_gpu:
                     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-                    inputs = inputs.to(device)
+                    input1 = input1.to(device)
+                    input2 = input2.to(device)
                     labels = labels.to(device)
                 else:
-                    inputs, labels = Variable(inputs), Variable(labels)
+                    input1, input2,labels = Variable(input1), Variable(input2), Variable(labels)
                 # print(inputs.shape, labels.shape)
                 # print(labels)
                 #inputs_num += len(inputs)
                 optimizer.zero_grad()
 
                 outputs = model(input1,input2)
+                print(outputs.data)    #看一下余弦相似度的范围
                 # _, predict = torch.max(outputs.data, 1)
-
+                # 设置一个判断，predict=1 if output.data>0.5 else 0
                 loss = criterion(outputs, labels)
                 if phase == 'train':
                     loss.backward()
@@ -170,7 +172,7 @@ if __name__ == '__main__':
 
     model = fine_tune_model(use_gpu=True)
 
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss()   #尝试换不同的损失函数
     optimizer_ft = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     try:
         model = train_model(data_loader, model, criterion, optimizer_ft, exp_lr_scheduler, num_epochs=25, use_gpu=True)
