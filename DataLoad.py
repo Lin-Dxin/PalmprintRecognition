@@ -15,6 +15,7 @@ import os
 import matplotlib.pyplot as plt
 from torch.autograd import Variable
 
+
 class DataLoader(object):
     def __init__(self, data_dir, image_size, batch_size=50):
         self.base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -26,14 +27,15 @@ class DataLoader(object):
         self.normalize_std = [0.229, 0.224, 0.225]
         self.data_transforms = {
             'train': transforms.Compose([
-                transforms.Resize(224),
+                transforms.Resize([112, 224]),
                 # transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize(self.normalize_mean, self.normalize_std)
             ]),
             'val': transforms.Compose([
-                transforms.Resize(224),
-                transforms.CenterCrop(self.image_size),
+                transforms.Resize([112, 224]),
+                # transforms.CenterCrop(self.image_size),
+                transforms.CenterCrop([112, 224]),
                 transforms.ToTensor(),
                 transforms.Normalize(self.normalize_mean, self.normalize_std)
             ]),
@@ -75,20 +77,16 @@ class DataLoader(object):
         return Variable(image_tensor)
 
 
-
 if __name__ == '__main__':
     train_dir = "data/TrainingSet/NIR"
     batch_size = 50
-    test_ld = loader(train_dir,batch_size)
+    # test_ld = loader(train_dir, batch_size)
     for data, label in test_ld:
         print(data.shape, label.shape)
         for img in data:
             print(img.shape)
             break
         break
-
-
-
 
     # list_plastic = os.listdir(train_dir)
     # number_files_plastic = len(list_plastic)

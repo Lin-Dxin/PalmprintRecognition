@@ -25,9 +25,8 @@ class two_input_net(nn.Module):
     def __init__(self, model):
         super(two_input_net, self).__init__()
         self.conv = nn.Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-        self.resnet_layer = nn.Sequential(*list(model.children())[1:-2])
+        self.resnet_layer = nn.Sequential(*list(model.children())[1:-1])
         # self.fc = nn.Linear(512)
-
 
     def forward(self, input1, input2):
         x1 = self.conv(input1)
@@ -37,13 +36,13 @@ class two_input_net(nn.Module):
         # x1 = self.linear(x1)
         # x2 = self.linear(x2)
         # torch.cat([x1, x2], )
-        # x1 = torch.squeeze(x1)  # 50, 512 , 7 ,7
-        # x2 = torch.squeeze(x2)  # 50, 512 , 7 ,7
-        print(x1.shape)
+        x1 = torch.squeeze(x1)  # 50, 512 , 1 ,1
+        x2 = torch.squeeze(x2)  # 50, 512 , 1 ,1
+        # print(x1.shape)
         cos = nn.CosineSimilarity(dim=1, eps=1e-6)
-        output = cos(x1, x2)  # 50, 7, 7
+        output = cos(x1, x2)  # 50
         # print(output)
-        print(output.shape)
+        # print(output.shape)
         return output  # 50
 
 

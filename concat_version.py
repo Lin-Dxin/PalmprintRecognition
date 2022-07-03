@@ -46,26 +46,22 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
 
             for batch_data in data_loader.load_data(data_set=phase):
                 rawinputs, rawlabels = batch_data
-                input1, input2, labels = get_two_input_data(rawinputs, rawlabels, data_loader.batch_size)
+                inputs, labels = get_concated_data(rawinputs,rawlabels,data_loader.batch_size)
+                # input1, input2, labels = get_two_input_data(rawinputs, rawlabels, data_loader.batch_size)
                 # data_loader.show_image(input1[0])
                 # data_loader.show_image(input2[0])
-                if use_gpu:
-                    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-                    input1 = input1.to(device)
-                    input2 = input2.to(device)
-                    labels = labels.to(device)
-                else:
-                    input1, input2, labels = Variable(input1), Variable(input2), Variable(labels)
+                device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+                inputs = inputs.to(device)
+                labels = labels.to(device)
                 # print(inputs.shape, labels.shape)
                 # print(labels)
                 # inputs_num += len(inputs)
                 optimizer.zero_grad()
 
-                outputs = model(input1, input2)
+                outputs = model(inputs)
                 # print(outputs.data)  # 看一下余弦相似度的范围
-                # _, predict = torch.max(outputs.data, 1)
+                _, predict = torch.max(outputs.data, 1)
                 # 设置一个判断，predict=1 if output.data>0.5 else 0
-                predict = get_predict(outputs)
                 predict = predict.cuda()
                 loss = criterion(outputs, labels)
                 if phase == 'train':
@@ -95,17 +91,6 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
     return best_model
 
 
-def get_predict(outputs):
-    # print(outputs.shape)
-    predict = torch.zeros(len(outputs), dtype=torch.int64)
-    i = 0
-    for result in outputs:
-        if result > 0.75:
-            predict[i] = 1
-        else:
-            predict[i] = 0
-        i += 1
-    return predict
 
 
 def get_two_input_data(rawinputs, rawlabels, batch_size):
@@ -202,7 +187,7 @@ if __name__ == '__main__':
 
     # model = model.fine_tune_model(use_gpu=True)
 
-    model = model.get_two_input_net()
+    model = model.fine_tune_model(use_gpu=True)
     model = model.cuda()
     criterion = nn.CrossEntropyLoss()  # 尝试换不同的损失函数
     # criterion = nn.Softmax()
