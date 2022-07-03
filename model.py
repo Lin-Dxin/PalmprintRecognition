@@ -35,6 +35,9 @@ class two_input_net(nn.Module):
         x1 = self.resnet_layer(x1)  # 512
         x2 = self.resnet_layer(x2)  # 512
         # torch.cat([x1, x2], )
+        x1 = torch.squeeze(x1)
+        x2 = torch.squeeze(x2)
+        print(x1.shape)
         cos = nn.CosineSimilarity(dim=1, eps=1e-6)
         output = cos(x1, x2)
         return output

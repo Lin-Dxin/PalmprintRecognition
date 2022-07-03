@@ -13,6 +13,7 @@ from torch.autograd import Variable
 from random import sample
 from torchvision import models
 
+
 def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epochs=25, use_gpu=False):
     """
     the pipeline of train PyTorch model
@@ -46,7 +47,7 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
             for batch_data in data_loader.load_data(data_set=phase):
                 rawinputs, rawlabels = batch_data
                 input1, input2, labels = get_two_input_data(rawinputs, rawlabels, data_loader.batch_size)
-                data_loader.show_image(input1[0])
+                # data_loader.show_image(input1[0])
                 if use_gpu:
                     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
                     input1 = input1.to(device)
@@ -60,9 +61,14 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
                 optimizer.zero_grad()
 
                 outputs = model(input1, input2)
-                print(outputs.data)  # 看一下余弦相似度的范围
+                # print(outputs.data)  # 看一下余弦相似度的范围
                 # _, predict = torch.max(outputs.data, 1)
                 # 设置一个判断，predict=1 if output.data>0.5 else 0
+                predict = get_predict(outputs)
+                print(outputs.dtype)
+                print(predict.dtype)
+                print(predict.shape)
+                print(outputs.shape)
                 loss = criterion(outputs, labels)
                 if phase == 'train':
                     loss.backward()
@@ -91,12 +97,25 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
     return best_model
 
 
+def get_predict(outputs):
+    print(outputs.shape)
+    predict = torch.zeros(len(outputs))
+    i = 0
+    for result in outputs:
+        if result > 0.5:
+            predict[i] = 1
+        else:
+            predict[i] = 0
+        i += 1
+    return predict
+
+
 def get_two_input_data(rawinputs, rawlabels, batch_size):
     length = int(batch_size / 2)
     it_times = int(batch_size / 2)  # 100/2=50
-    input1 = torch.zeros([length, 3, 244, 244], dtype=torch.float32) # [50,3,244,244]
+    input1 = torch.zeros([length, 3, 244, 244], dtype=torch.float32)  # [50,3,244,244]
     input2 = torch.zeros([length, 3, 244, 244], dtype=torch.float32)
-    labels = torch.zeros([length, 1], dtype=torch.int64)
+    labels = torch.zeros(length, dtype=torch.int64)
     cnt = 0
     j = 0
     for i in range(it_times):  # 50
@@ -107,7 +126,7 @@ def get_two_input_data(rawinputs, rawlabels, batch_size):
             input2[j] = rawinputs[cnt]
             label2 = rawlabels[cnt]
             cnt += 1
-            labels[j][0] = 1 if label1 == label2 else 0
+            labels[j] = 1 if label1 == label2 else 0
             j += 1
         else:  # >25
             rand_a, rand_b = sample(range(it_times, batch_size, 1), 2)
@@ -115,9 +134,9 @@ def get_two_input_data(rawinputs, rawlabels, batch_size):
             label1 = rawlabels[rand_a]
             input2[j] = rawinputs[rand_b]
             label2 = rawlabels[rand_b]
-            labels[j][0] = 1 if label1 == label2 else 0
+            labels[j] = 1 if label1 == label2 else 0
             j += 1
-    print(input1.shape,"\n",input2.shape,"\n",labels.shape)
+    # print(input1.shape,"\n",input2.shape,"\n",labels.shape)
     return input1, input2, labels
 
 
