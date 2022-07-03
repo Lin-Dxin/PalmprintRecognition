@@ -57,7 +57,7 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
                 #inputs_num += len(inputs)
                 optimizer.zero_grad()
 
-                outputs = model(inputs)
+                outputs = model(inputs) #input1 input2
                 _, predict = torch.max(outputs.data, 1)
                 loss = criterion(outputs, labels)
                 if phase == 'train':
@@ -86,6 +86,24 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
     print('Best val Acc: {:4f}'.format(best_acc))
     return best_model
 
+def get_two_input_data(rawinputs, rawlabels, batch_size):
+    length = int(batch_size / 2)
+    it_times = int(batch_size/2)    #100/2=50
+    input1 = torch.zeros([length, 3, 244, 244], dtype=torch.float32)
+    input2 = torch.zeros([length, 3, 244, 244], dtype=torch.float32)
+    labels = torch.zeros(length, dtype=torch.int64)
+    cnt = 0
+    for i in range(it_times):   #50
+        if i < it_times / 2:     #<25
+            input1[cnt] = rawinputs[cnt]; label1 = rawlabels[cnt] ;cnt += 1
+            input2[cnt] = rawinputs[cnt]; label2 = rawlabels[cnt] ;cnt += 1
+            labels[i] = 1 if label1 == label2 else 0
+        else:   #>25
+            rand_a, rand_b = sample(range(it_times, batch_size, 1), 2)
+            input1 = rawinputs[rand_a] ; label1 = rawlabels[rand_a]
+            input2 = rawinputs[rand_b] ; label2 = rawlabels[rand_b]
+            labels[i] = 1 if label1 == label2 else 0
+    return input1,input2,labels
 
 def get_concated_data(rawinputs, rawlabels, batch_size):
     # 二和一、每次往后迭代两次
