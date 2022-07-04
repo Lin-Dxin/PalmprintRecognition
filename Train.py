@@ -58,12 +58,12 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
                 # inputs_num += len(inputs)
                 optimizer.zero_grad()
 
-                output1,output2 = model(input1, input2)   #输出两个图片的特征向量
+                output1, output2 = model(input1, input2)  # 输出两个图片的特征向量
                 # print(outputs.data)  # 看一下余弦相似度的范围
 
-                predict = get_predict(output1, output2)      #相似度>0.75 为1   <0.75为-1
+                predict = get_predict(output1, output2)  # 相似度>0.75 为1   <0.75为-1
                 predict = predict.cuda()
-                loss = criterion(output1, output2, labels)    #cosineEmbeddingloss
+                loss = criterion(output1, output2, labels)  # cosineEmbeddingloss
                 if phase == 'train':
                     loss.backward()
                     optimizer.step()
@@ -72,8 +72,8 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
                 running_loss += loss.data
                 running_corrects += torch.sum(predict == labels.data)
 
-            epoch_loss = running_loss / 3000
-            epoch_acc = running_corrects / 3000
+            epoch_loss = running_loss / (data_loader.data_sizes[phase] / 2)
+            epoch_acc = running_corrects / (data_loader.data_sizes[phase] / 2)
 
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(
                 phase, epoch_loss, epoch_acc))
@@ -91,18 +91,18 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
     return best_model
 
 
-def get_predict(output1,output2):
-    #在get_predict里再加入相似度计算
+def get_predict(output1, output2):
+    # 在get_predict里再加入相似度计算
     # print(outputs.shape)
     predict = torch.zeros(len(output1), dtype=torch.int64)
     cos = nn.CosineSimilarity(dim=1, eps=1e-6)
-    dis = cos(output1,output2)
+    dis = cos(output1, output2)
     i = 0
     for result in dis:
         if result > 0.75:
             predict[i] = 1
         else:
-            predict[i] = -1   #修改
+            predict[i] = -1  # 修改
         i += 1
     return predict
 
@@ -123,7 +123,7 @@ def get_two_input_data(rawinputs, rawlabels, batch_size):
             input2[j] = rawinputs[cnt]
             label2 = rawlabels[cnt]
             cnt += 1
-            labels[j] = 1 if label1 == label2 else -1  #标签修改
+            labels[j] = 1 if label1 == label2 else -1  # 标签修改
             j += 1
         else:  # >25
             rand_a, rand_b = sample(range(it_times, batch_size, 1), 2)
@@ -131,7 +131,7 @@ def get_two_input_data(rawinputs, rawlabels, batch_size):
             label1 = rawlabels[rand_a]
             input2[j] = rawinputs[rand_b]
             label2 = rawlabels[rand_b]
-            labels[j] = 1 if label1 == label2 else -1   #标签
+            labels[j] = 1 if label1 == label2 else -1  # 标签
             j += 1
     # print(input1.shape,"\n",input2.shape,"\n",labels.shape)
     return input1, input2, labels
@@ -192,8 +192,8 @@ def save_torch_model(model, name):
 if __name__ == '__main__':
     train_dir = "data/TrainingSet/NIR/"
     _batchsize = 50
-    data_loader = DataLoad_Twoinputs.DataLoader(data_dir='Data/TrainingSet/ROI_image/', image_size=224,
-                                      batch_size=_batchsize)
+    data_loader = DataLoad_Twoinputs.DataLoader(data_dir='Data/TrainingSet/NIR/', image_size=[224, 224],
+                                                batch_size=_batchsize)
     # print(data_loader.data_sizes['train'])
     # inputs, classes = next(iter(data_loader.load_data()))
     # out = torchvision.utils.make_grid(inputs)
@@ -209,8 +209,8 @@ if __name__ == '__main__':
     optimizer_ft = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     try:
         model = train_model(data_loader, model, criterion, optimizer_ft, exp_lr_scheduler, num_epochs=25, use_gpu=True)
-        save_torch_model(model, "model1")
+        torch.save(model.state_dict(), './model1.pt')
     except KeyboardInterrupt:
         print('manually interrupt, try saving model for now...')
-        save_torch_model(model, "model1")
+        torch.save(model.state_dict(), './model1.pt')
         print('model saved.')

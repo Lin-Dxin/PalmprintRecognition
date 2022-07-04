@@ -43,7 +43,8 @@ class two_input_net(nn.Module):
         # output = cos(x1, x2)  # 50
         # print(output)
         # print(output.shape)
-        return x1,x2  # 50
+
+        return x1, x2  # 50
 
 
 if __name__ == '__main__':

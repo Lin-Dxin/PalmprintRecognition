@@ -48,7 +48,7 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
                 rawinputs, rawlabels = batch_data
                 inputs, labels = get_concated_data(rawinputs,rawlabels,data_loader.batch_size)
                 # input1, input2, labels = get_two_input_data(rawinputs, rawlabels, data_loader.batch_size)
-                # data_loader.show_image(input1[0])
+                # data_loader.show_image(inputs[0])
                 # data_loader.show_image(input2[0])
                 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
                 inputs = inputs.to(device)
@@ -72,8 +72,8 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
                 running_loss += loss.data
                 running_corrects += torch.sum(predict == labels.data)
 
-            epoch_loss = running_loss / 3000
-            epoch_acc = running_corrects / 3000
+            epoch_loss = running_loss / (data_loader.data_sizes[phase] / 2)
+            epoch_acc = running_corrects / (data_loader.data_sizes[phase] / 2)
 
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(
                 phase, epoch_loss, epoch_acc))
@@ -195,8 +195,8 @@ if __name__ == '__main__':
     optimizer_ft = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     try:
         model = train_model(data_loader, model, criterion, optimizer_ft, exp_lr_scheduler, num_epochs=25, use_gpu=True)
-        save_torch_model(model, "model1")
+        torch.save(model.state_dict(), './model1.pt')
     except KeyboardInterrupt:
         print('manually interrupt, try saving model for now...')
-        save_torch_model(model, "model1")
+        torch.save(model.state_dict(), './model1.pt')
         print('model saved.')
