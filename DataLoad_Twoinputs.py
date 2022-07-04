@@ -27,15 +27,15 @@ class DataLoader(object):
         self.normalize_std = [0.229, 0.224, 0.225]
         self.data_transforms = {
             'train': transforms.Compose([
-                transforms.Resize([112, 224]),
+                transforms.Resize(224),
                 # transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize(self.normalize_mean, self.normalize_std)
             ]),
             'val': transforms.Compose([
-                transforms.Resize([112, 224]),
-                # transforms.CenterCrop(self.image_size),
-                transforms.CenterCrop([112, 224]),
+                transforms.Resize(224),
+                transforms.CenterCrop(self.image_size),
+                transforms.CenterCrop(224),
                 transforms.ToTensor(),
                 transforms.Normalize(self.normalize_mean, self.normalize_std)
             ]),
@@ -75,6 +75,5 @@ class DataLoader(object):
         image_tensor = self.data_transforms['val'](image).float()
         image_tensor.unsqueeze_(0)
         return Variable(image_tensor)
-
 
 

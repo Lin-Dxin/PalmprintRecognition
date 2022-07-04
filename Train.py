@@ -6,7 +6,7 @@ import torch.nn as nn
 from torchvision.models import ResNet18_Weights
 
 import model
-import DataLoad
+import DataLoad_Twoinputs
 import time
 import torch.optim as optim
 from torch.autograd import Variable
@@ -27,7 +27,7 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
     :return:
     """
     since_time = time.time()
-
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     best_model = model
     best_acc = 0
     for epoch in range(num_epochs):
@@ -49,13 +49,10 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
                 input1, input2, labels = get_two_input_data(rawinputs, rawlabels, data_loader.batch_size)
                 # data_loader.show_image(input1[0])
                 # data_loader.show_image(input2[0])
-                if use_gpu:
-                    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-                    input1 = input1.to(device)
-                    input2 = input2.to(device)
-                    labels = labels.to(device)
-                else:
-                    input1, input2, labels = Variable(input1), Variable(input2), Variable(labels)
+
+                input1 = input1.to(device)
+                input2 = input2.to(device)
+                labels = labels.to(device)
                 # print(inputs.shape, labels.shape)
                 # print(labels)
                 # inputs_num += len(inputs)
@@ -66,7 +63,7 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
                 # _, predict = torch.max(outputs.data, 1)
                 # 设置一个判断，predict=1 if output.data>0.5 else 0
                 predict = get_predict(outputs)
-                predict = predict.cuda()
+                predict = predict.to(device)
                 loss = criterion(outputs, labels)
                 if phase == 'train':
                     loss.backward()
@@ -192,8 +189,8 @@ def save_torch_model(model, name):
 
 if __name__ == '__main__':
     train_dir = "data/TrainingSet/NIR/"
-    _batchsize = 100
-    data_loader = DataLoad.DataLoader(data_dir='Data/TrainingSet/ROI_image/', image_size=224,
+    _batchsize = 50
+    data_loader = DataLoad_Twoinputs.DataLoader(data_dir='Data/TrainingSet/ROI_image/', image_size=224,
                                       batch_size=_batchsize)
     # print(data_loader.data_sizes['train'])
     # inputs, classes = next(iter(data_loader.load_data()))
