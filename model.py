@@ -39,11 +39,11 @@ class two_input_net(nn.Module):
         x1 = torch.squeeze(x1)  # 50, 512 , 1 ,1
         x2 = torch.squeeze(x2)  # 50, 512 , 1 ,1
         # print(x1.shape)
-        cos = nn.CosineSimilarity(dim=1, eps=1e-6)
-        output = cos(x1, x2)  # 50
+        # cos = nn.CosineSimilarity(dim=1, eps=1e-6)
+        # output = cos(x1, x2)  # 50
         # print(output)
         # print(output.shape)
-        return output  # 50
+        return x1,x2  # 50
 
 
 if __name__ == '__main__':
