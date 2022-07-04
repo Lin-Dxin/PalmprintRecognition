@@ -58,13 +58,12 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
                 # inputs_num += len(inputs)
                 optimizer.zero_grad()
 
-                outputs = model(input1, input2)
+                output1,output2 = model(input1, input2)   #输出两个图片的特征向量
                 # print(outputs.data)  # 看一下余弦相似度的范围
-                # _, predict = torch.max(outputs.data, 1)
-                # 设置一个判断，predict=1 if output.data>0.5 else 0
-                predict = get_predict(outputs)
-                predict = predict.to(device)
-                loss = criterion(outputs, labels)
+
+                predict = get_predict(output1, output2)      #相似度>0.75 为1   <0.75为-1
+                predict = predict.cuda()
+                loss = criterion(output1, output2, labels)    #cosineEmbeddingloss
                 if phase == 'train':
                     loss.backward()
                     optimizer.step()
@@ -92,15 +91,18 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
     return best_model
 
 
-def get_predict(outputs):
+def get_predict(output1,output2):
+    #在get_predict里再加入相似度计算
     # print(outputs.shape)
-    predict = torch.zeros(len(outputs), dtype=torch.int64)
+    predict = torch.zeros(len(output1), dtype=torch.int64)
+    cos = nn.CosineSimilarity(dim=1, eps=1e-6)
+    dis = cos(output1,output2)
     i = 0
-    for result in outputs:
+    for result in dis:
         if result > 0.75:
             predict[i] = 1
         else:
-            predict[i] = 0
+            predict[i] = -1   #修改
         i += 1
     return predict
 
@@ -121,7 +123,7 @@ def get_two_input_data(rawinputs, rawlabels, batch_size):
             input2[j] = rawinputs[cnt]
             label2 = rawlabels[cnt]
             cnt += 1
-            labels[j] = 1 if label1 == label2 else 0
+            labels[j] = 1 if label1 == label2 else -1  #标签修改
             j += 1
         else:  # >25
             rand_a, rand_b = sample(range(it_times, batch_size, 1), 2)
@@ -129,7 +131,7 @@ def get_two_input_data(rawinputs, rawlabels, batch_size):
             label1 = rawlabels[rand_a]
             input2[j] = rawinputs[rand_b]
             label2 = rawlabels[rand_b]
-            labels[j] = 1 if label1 == label2 else 0
+            labels[j] = 1 if label1 == label2 else -1   #标签
             j += 1
     # print(input1.shape,"\n",input2.shape,"\n",labels.shape)
     return input1, input2, labels
@@ -201,8 +203,8 @@ if __name__ == '__main__':
 
     model = model.get_two_input_net()
     model = model.cuda()
-    criterion = nn.CrossEntropyLoss()  # 尝试换不同的损失函数
-    # criterion = nn.Softmax()
+    # criterion = nn.CrossEntropyLoss()  # 尝试换不同的损失函数
+    criterion = nn.CosineEmbeddingLoss()
     # criterion
     optimizer_ft = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     try:
