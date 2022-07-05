@@ -48,7 +48,7 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
                 rawinputs, rawlabels = batch_data
                 input1, input2, labels = get_two_input_data(rawinputs, rawlabels, data_loader.batch_size)
                 # data_loader.show_image(input1[0])
-                # data_loader.show_image(input2[0])
+                data_loader.show_image(input2[0])
 
                 input1 = input1.to(device)
                 input2 = input2.to(device)
@@ -57,7 +57,7 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
                 # print(labels)
                 # inputs_num += len(inputs)
                 optimizer.zero_grad()
-
+                # print(input1.shape, input2.shape)
                 output1, output2 = model(input1, input2)  # 输出两个图片的特征向量
                 # print(outputs.data)  # 看一下余弦相似度的范围
 
@@ -94,12 +94,17 @@ def train_model(data_loader, model, criterion, optimizer, lr_scheduler, num_epoc
 def get_predict(output1, output2):
     # 在get_predict里再加入相似度计算
     # print(outputs.shape)
-    predict = torch.zeros(len(output1), dtype=torch.int64)
+    length = int(len(output1)/2)
+    predict = torch.zeros(length, dtype=torch.int64)
+    output1 = output1.reshape(1, -1)
+    output2 = output2.reshape(1, -1)
+    # print(len(predict))
     cos = nn.CosineSimilarity(dim=1, eps=1e-6)
     dis = cos(output1, output2)
     i = 0
     for result in dis:
-        if result > 0.75:
+        # print(result)
+        if result > 0.9:
             predict[i] = 1
         else:
             predict[i] = -1  # 修改
@@ -210,7 +215,9 @@ if __name__ == '__main__':
     try:
         model = train_model(data_loader, model, criterion, optimizer_ft, exp_lr_scheduler, num_epochs=25, use_gpu=True)
         torch.save(model.state_dict(), './model1.pt')
+        # for parameters in model.parameters():
+        #     print(parameters)
     except KeyboardInterrupt:
         print('manually interrupt, try saving model for now...')
-        torch.save(model.state_dict(), './model1.pt')
+        # torch.save(model.state_dict(), './model1.pt')
         print('model saved.')
